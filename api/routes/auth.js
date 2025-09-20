@@ -270,10 +270,16 @@ router.post('/logout', authenticateToken, async (req, res) => {
         const token = authHeader?.replace('Bearer ', '');
 
         if (token) {
-            // Invalidate session in database
+            // Invalidate current session in database
             await pool.query(
                 'UPDATE user_sessions SET is_active = FALSE WHERE session_token = $1',
                 [token]
+            );
+        } else {
+            // If no token provided, invalidate all sessions for this user (safer)
+            await pool.query(
+                'UPDATE user_sessions SET is_active = FALSE WHERE user_id = $1',
+                [req.user.id]
             );
         }
 
