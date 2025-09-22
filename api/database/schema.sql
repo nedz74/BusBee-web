@@ -5,16 +5,18 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Users table for both regular users and bus owners
+-- Note: Same phone number can be used for both 'user' and 'bus_owner' types
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    phone_number VARCHAR(15) UNIQUE NOT NULL,
+    phone_number VARCHAR(15) NOT NULL,
     name VARCHAR(100),
     email VARCHAR(255),
     user_type VARCHAR(20) NOT NULL DEFAULT 'user', -- 'user' or 'bus_owner'
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT users_phone_user_type_unique UNIQUE (phone_number, user_type)
 );
 
 -- OTP table for verification
@@ -43,6 +45,11 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 CREATE TABLE IF NOT EXISTS bus_owner_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    bus_owner_name VARCHAR(255),
+    bus_name VARCHAR(255),
+    bus_number VARCHAR(20),
+    rc_book_number VARCHAR(100),
+    has_completed_onboarding BOOLEAN DEFAULT FALSE,
     business_name VARCHAR(255),
     license_number VARCHAR(100),
     address TEXT,
@@ -101,10 +108,12 @@ CREATE INDEX IF NOT EXISTS idx_buses_owner ON buses(owner_id);
 CREATE INDEX IF NOT EXISTS idx_buses_status ON buses(status);
 
 -- Insert some sample data
+-- Note: Same phone number can be used for both user types
 INSERT INTO users (phone_number, name, user_type, is_verified) VALUES
 ('9188593928', 'Test Bus Owner', 'bus_owner', true),
-('9876543210', 'Test User', 'user', true)
-ON CONFLICT (phone_number) DO NOTHING;
+('9188593928', 'Test User', 'user', true),  -- Same phone, different user type
+('9876543210', 'Another User', 'user', true)
+ON CONFLICT (phone_number, user_type) DO NOTHING;
 
 INSERT INTO routes (route_name, start_location, end_location, distance_km, estimated_duration_minutes) VALUES
 ('Kochi - Thrissur Express', 'Kochi', 'Thrissur', 75.5, 90),

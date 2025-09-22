@@ -124,17 +124,17 @@ router.post('/verify-otp', async (req, res) => {
         }
 
 
-        // Check if user exists in database
+        // Check if user exists with this phone number and user type
         let userResult = await pool.query(
-            'SELECT * FROM users WHERE phone_number = $1',
-            [phoneNumber]
+            'SELECT * FROM users WHERE phone_number = $1 AND user_type = $2',
+            [phoneNumber, userType]
         );
 
         let user;
         let isNewUser = false;
 
         if (userResult.rows.length === 0) {
-            // Create new user in database
+            // Create new user with specific user type
             const insertResult = await pool.query(
                 'INSERT INTO users (phone_number, user_type, is_verified, name) VALUES ($1, $2, TRUE, $3) RETURNING *',
                 [phoneNumber, userType, userType === 'bus_owner' ? 'Bus Owner' : 'User']
@@ -181,6 +181,7 @@ router.post('/verify-otp', async (req, res) => {
                     email: user.email,
                     userType: user.user_type,
                     isVerified: user.is_verified,
+                    hasCompletedOnboarding: profileData?.has_completed_onboarding || false,
                     profile: profileData
                 },
                 ...tokens,

@@ -1,5 +1,4 @@
 const express = require('express');
-const { Pool } = require('pg');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -12,27 +11,15 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// PostgreSQL connection pool
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-});
-
-// Test database connection
-pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-        console.error('Database connection error:', err);
-    } else {
-        console.log('Database connected at:', res.rows[0].now);
-    }
-});
+// Import database connection
+const { pool } = require('./database/connection');
 
 // Import and setup auth routes
 const { router: authRouter, setPool } = require('./routes/auth');
 setPool(pool);
+
+// Import and setup bus owner routes
+const busOwnerRouter = require('./routes/bus-owner');
 
 // Root API endpoint
 app.get('/', (req, res) => {
@@ -49,6 +36,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRouter);
+app.use('/api/bus-owner', busOwnerRouter);
 
 // Example users endpoint (for testing)
 app.get('/users', async (req, res) => {
