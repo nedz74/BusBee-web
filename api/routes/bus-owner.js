@@ -115,4 +115,32 @@ router.get('/details', authenticateToken, async (req, res) => {
     }
 });
 
+// POST /api/bus-owner/mark-verification-modal-seen
+// Mark that the user has seen the verification modal
+router.post('/mark-verification-modal-seen', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Update the has_seen_verification_modal flag
+        await pool.query(
+            `UPDATE bus_owner_profiles 
+             SET has_seen_verification_modal = true, updated_at = CURRENT_TIMESTAMP
+             WHERE user_id = $1`,
+            [userId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Verification modal marked as seen'
+        });
+
+    } catch (error) {
+        console.error('Mark verification modal seen error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to mark verification modal as seen. Please try again.'
+        });
+    }
+});
+
 module.exports = router;
