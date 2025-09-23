@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS bus_owner_profiles (
     bus_number VARCHAR(20),
     rc_book_number VARCHAR(100),
     has_completed_onboarding BOOLEAN DEFAULT FALSE,
+    has_seen_verification_modal BOOLEAN DEFAULT FALSE,
     business_name VARCHAR(255),
     license_number VARCHAR(100),
     address TEXT,
